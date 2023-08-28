@@ -1,45 +1,64 @@
+import unittest
 import time
+import HtmlTestRunner
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Inicializar el controlador del navegador
-driver = webdriver.Chrome()
+class TestNewsletterSubscription(unittest.TestCase):
 
-# Abrir el sitio web de demowebshop
-driver.get("https://demowebshop.tricentis.com")
+    def setUp(self):
+        self.orden_log = 1
+        self.driver = webdriver.Chrome()
+        self.driver.get("https://demowebshop.tricentis.com")
 
-# Solicitar al usuario que ingrese su correo electrónico
-correo_electronico = input("Por favor ingrese su correo electrónico: ")
+    def test_newsletter_subscription(self):
+        log = "Cargando página..."
+        print(f"{self.orden_log} - {log}<br>")
+        self.orden_log += 1
 
-# Encontrar el campo de búsqueda e ingresar el correo electrónico del usuario
-campo_busqueda = driver.find_element("id", "newsletter-email")
-campo_busqueda.send_keys(correo_electronico)
+        correo_electronico = "test@example.com"
 
-# Encontrar el botón de suscripción y hacer clic en él
-boton_suscripcion = driver.find_element("id", "newsletter-subscribe-button")
-boton_suscripcion.click()
+        log = f"Email ingresado: {correo_electronico}"
+        print(f"{self.orden_log} - {log}<br>")
+        self.orden_log += 1
 
-# Esperar a que la página cargue completamente
-time.sleep(3)
+        campo_busqueda = self.driver.find_element(By.ID, "newsletter-email")
+        campo_busqueda.send_keys(correo_electronico)
 
-# Esperar a que aparezca el elemento de confirmación o la excepción
-try:
-    elemento_confirmacion = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "newsletter-result-block"))
-    )
-    # Verificar si el elemento de confirmación está vacío
-    if len(elemento_confirmacion.text) == 0:
-        print("El correo electrónico ingresado es inválido.")
-    else:
-        # Imprimir el mensaje de confirmación
-        print(elemento_confirmacion.text)
-except:
-    # Manejar la excepción TimeoutException
-    print("No se pudo encontrar el elemento de confirmación. Verifica que el correo electrónico sea válido.")
-finally:
-    # Esperar a que el usuario presione Enter antes de cerrar el navegador
-    input("Presiona Enter para cerrar el navegador...")
-    # Cerrar el navegador al final
-    driver.quit()
+        log = "Haciendo click al botón de suscribir..."
+        print(f"{self.orden_log} - {log}<br>")
+        self.orden_log += 1
+
+        boton_suscripcion = self.driver.find_element(By.ID, "newsletter-subscribe-button")
+        boton_suscripcion.click()
+
+        try:
+            time.sleep(3)
+            elemento_confirmacion = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.ID, "newsletter-result-block"))
+            )
+            
+            log = "Verificando el mensaje de confirmación..."
+            print(f"{self.orden_log} - {log}<br>")
+            self.orden_log += 1
+
+            self.assertNotEqual(len(elemento_confirmacion.text), 0, "El email ingresado es inválido.")
+
+            log = "Mensaje de confirmación: " + elemento_confirmacion.text
+            print(f"{self.orden_log} - {log}<br>")
+            self.orden_log += 1
+
+        except Exception as e:
+            log = "No se ha podido encontrar un mensaje de confirmación. Por favor verifica que el email es válido."
+            print(f"{self.orden_log} - {log}<br>")
+            self.orden_log += 1
+            self.fail(str(e))
+
+    def tearDown(self):
+        self.driver.quit()
+
+if __name__ == '__main__':
+    unittest.main(testRunner=HtmlTestRunner.HTMLTestRunner(output='/Users/marcos/Documents/pruebasSoftware/Reportes'))
+
